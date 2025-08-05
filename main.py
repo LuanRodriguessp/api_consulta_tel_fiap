@@ -175,6 +175,84 @@ async def get_examples():
 async def call_gemini_api(prompt: str) -> str:
     """Chama a API do Gemini para gerar resposta"""
     try:
+        # Verifica se a pergunta contém um número de telefone
+        import re
+        phone_pattern = r'\b\d{10,13}\b'
+        phone_matches = re.findall(phone_pattern, prompt)
+        
+        # Se encontrou um número, valida usando a API
+        if phone_matches:
+            phone_number = phone_matches[0]
+            try:
+                # Valida o número usando a API
+                result = phone_validator.validate_phone(phone_number)
+                
+                if result["is_valid"]:
+                    validation_info = f"""
+                    ✅ **Número Válido!**
+                    
+                    **Número Original:** {result["original_number"]}
+                    **Número Formatado:** {result["formatted_number"]}
+                    **Código do País:** {result["country_code"]}
+                    **DDD:** {result["area_code"]}
+                    **Número:** {result["number"]}
+                    **Operadora:** {result["operator"] or 'Não identificada'}
+                    """
+                else:
+                    validation_info = f"""
+                    ❌ **Número Inválido!**
+                    
+                    **Número:** {result["original_number"]}
+                    **Erro:** {result["error_message"]}
+                    """
+                
+                # Adiciona informações sobre validação ao prompt
+                enhanced_prompt = f"""Você é um assistente especializado em validação de números de celular brasileiros. 
+                Responda de forma clara e concisa em português brasileiro.
+                
+                O usuário perguntou: {prompt}
+                
+                **Resultado da Validação da API:**
+                {validation_info}
+                
+                **Informações Adicionais:**
+                - Formato esperado: 55 11 98877 6655
+                - DDDs válidos no Brasil: 11-99 (com algumas exceções)
+                - Números de celular devem começar com 9 ou 8
+                - Comprimento: entre 11 e 13 dígitos
+                
+                Responda de forma amigável e inclua as informações da validação acima."""
+                
+            except Exception as e:
+                enhanced_prompt = f"""Você é um assistente especializado em validação de números de celular brasileiros. 
+                Responda de forma clara e concisa em português brasileiro.
+                
+                Pergunta do usuário: {prompt}
+                
+                **Nota:** Encontrei um número na sua pergunta ({phone_matches[0]}), mas houve um erro ao validá-lo na API.
+                
+                Se a pergunta for sobre validação de números de celular, explique sobre:
+                - Formato esperado: 55 11 98877 6655
+                - DDDs válidos no Brasil
+                - Operadoras (Vivo, Claro, TIM, etc.)
+                - Como usar a API de validação
+                
+                Se for uma pergunta geral, responda de forma útil e amigável."""
+        else:
+            # Se não encontrou número, usa o prompt original
+            enhanced_prompt = f"""Você é um assistente especializado em validação de números de celular brasileiros. 
+            Responda de forma clara e concisa em português brasileiro.
+            
+            Pergunta do usuário: {prompt}
+            
+            Se a pergunta for sobre validação de números de celular, explique sobre:
+            - Formato esperado: 55 11 98877 6655
+            - DDDs válidos no Brasil
+            - Operadoras (Vivo, Claro, TIM, etc.)
+            - Como usar a API de validação
+            
+            Se for uma pergunta geral, responda de forma útil e amigável."""
+        
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
@@ -183,18 +261,7 @@ async def call_gemini_api(prompt: str) -> str:
                         {
                             "parts": [
                                 {
-                                    "text": f"""Você é um assistente especializado em validação de números de celular brasileiros. 
-                                    Responda de forma clara e concisa em português brasileiro.
-                                    
-                                    Pergunta do usuário: {prompt}
-                                    
-                                    Se a pergunta for sobre validação de números de celular, explique sobre:
-                                    - Formato esperado: 55 11 98877 6655
-                                    - DDDs válidos no Brasil
-                                    - Operadoras (Vivo, Claro, TIM, etc.)
-                                    - Como usar a API de validação
-                                    
-                                    Se for uma pergunta geral, responda de forma útil e amigável."""
+                                    "text": enhanced_prompt
                                 }
                             ]
                         }
