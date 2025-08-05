@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API de Validação de Celular Brasileiro</title>
+    <title>API de Validação de Celular Brasileiro - Chatbot</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 24px;
@@ -69,6 +69,25 @@
 
         .content {
             padding: 50px 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .form-group {
@@ -98,7 +117,6 @@
             border-color: #667eea;
             background: white;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), inset 0 1px 3px rgba(0,0,0,0.05);
-            transform: translateY(-1px);
         }
 
         .btn {
@@ -111,62 +129,63 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
+        .btn:active {
+            transform: translateY(0);
         }
 
-        .btn:hover::before {
-            left: 100%;
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.3);
         }
 
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
+        .btn-secondary:hover {
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
         }
 
         .result {
-            margin-top: 30px;
-            padding: 30px;
+            margin-top: 25px;
+            padding: 25px;
             border-radius: 16px;
             display: none;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            border: 1px solid rgba(0,0,0,0.05);
         }
 
         .result.success {
-            background: #d4edda;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
             border: 1px solid #c3e6cb;
             color: #155724;
         }
 
         .result.error {
-            background: #f8d7da;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
             border: 1px solid #f5c6cb;
             color: #721c24;
         }
 
         .result h3 {
             margin-bottom: 15px;
-            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .result-grid {
@@ -177,111 +196,200 @@
         }
 
         .result-item {
-            background: rgba(255,255,255,0.9);
-            padding: 20px;
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .result-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.3);
         }
 
         .result-item strong {
             display: block;
             margin-bottom: 5px;
-            color: #333;
+            color: #495057;
         }
 
-        .loading {
-            text-align: center;
+        /* Chatbot Styles */
+        .chat-container {
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 20px;
-            display: none;
-        }
-
-        .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-
-
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 10px;
             text-align: center;
             font-weight: 600;
         }
 
-        .status.online {
-            background: #d4edda;
-            color: #155724;
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
         }
 
-        .status.offline {
-            background: #f8d7da;
-            color: #721c24;
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
         }
 
-        /* Animações suaves */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .message.user {
+            flex-direction: row-reverse;
         }
 
-        .result {
-            animation: fadeIn 0.5s ease-out;
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            flex-shrink: 0;
         }
 
-        /* Melhorias para mobile */
-        @media (max-width: 600px) {
-            .container {
-                margin: 10px;
-                border-radius: 20px;
-            }
+        .message.user .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
 
+        .message.bot .message-avatar {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .message-content {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 70%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 25px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .chat-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .chat-btn.record {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .chat-btn.record:hover {
+            transform: scale(1.1);
+        }
+
+        .chat-btn.record.recording {
+            animation: pulse 1.5s infinite;
+        }
+
+        .chat-btn.send {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .chat-btn.send:hover {
+            transform: scale(1.1);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 18px;
+            max-width: 70%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
             .content {
-                padding: 30px 20px;
+                grid-template-columns: 1fr;
+                gap: 30px;
             }
-
+            
             .header h1 {
                 font-size: 2.2em;
             }
-
-            .header h1 svg {
-                width: 36px;
-                height: 36px;
-                margin-right: 10px;
-            }
-
+            
             .result-grid {
                 grid-template-columns: 1fr;
             }
-
-
-        }
-
-        /* Melhorias para telas muito pequenas */
-        @media (max-width: 400px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-
-
         }
     </style>
 </head>
@@ -289,84 +397,105 @@
     <div class="container">
         <div class="header">
             <h1>
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 15px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 15px;">
                     <path d="M17 2H7C5.89543 2 5 2.89543 5 4V20C5 21.1046 5.89543 22 7 22H17C18.1046 22 19 21.1046 19 20V4C19 2.89543 18.1046 2 17 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M12 18H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M8 6H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                Validador de Celular
+                Validador de Celular + Chatbot
             </h1>
-            <p>API de Validação de Números de Celular Brasileiros</p>
+            <p>Valide números de celular brasileiros e converse com nosso assistente inteligente</p>
         </div>
 
         <div class="content">
-            <div class="form-group">
-                <label for="phoneNumber">Número de Celular:</label>
-                <input type="text" id="phoneNumber" placeholder="Ex: 11988776655 ou (11) 98877-6655" maxlength="20">
+            <!-- Seção de Validação -->
+            <div class="section">
+                <h2>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Validação de Celular
+                </h2>
+                
+                <div class="form-group">
+                    <label for="phoneNumber">Número de Celular:</label>
+                    <input type="text" id="phoneNumber" placeholder="Ex: 11988776655 ou (11) 98877-6655" />
+                </div>
+                
+                <button class="btn" onclick="validatePhone()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Validar Número
+                </button>
+                
+                <div id="result" class="result"></div>
             </div>
 
-            <button class="btn" onclick="validatePhone()" id="validateBtn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
-                    <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                Validar Número
-            </button>
-
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Validando número...</p>
+            <!-- Seção do Chatbot -->
+            <div class="section">
+                <h2>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Assistente Inteligente
+                </h2>
+                
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
+                            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Chatbot - Assistente de Validação
+                    </div>
+                    
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="message bot">
+                            <div class="message-avatar">🤖</div>
+                            <div class="message-content">
+                                Olá! Sou seu assistente especializado em validação de números de celular brasileiros. 
+                                Como posso ajudá-lo hoje? Você pode me perguntar sobre formatos de números, DDDs, operadoras ou qualquer outra dúvida!
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="typing-indicator" id="typingIndicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                    
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Digite sua mensagem..." />
+                        <button class="chat-btn record" id="recordBtn" onclick="toggleRecording()" title="Gravar áudio">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2A3 3 0 0 0 9 5V11A3 3 0 0 0 15 11V5A3 3 0 0 0 12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M19 10V11A7 7 0 0 1 5 11V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M12 18.5V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M8 22H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <button class="chat-btn send" onclick="sendMessage()" title="Enviar mensagem">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
-
-            <div class="result" id="result"></div>
-
-            <div class="status" id="status">
-                <span id="statusText">Verificando status da API...</span>
-            </div>
-
-
         </div>
     </div>
 
     <script>
+        // Variáveis globais
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
         const API_BASE_URL = 'http://localhost:8000';
-        let isOnline = false;
 
-        // Verificar status da API ao carregar a página
-        window.onload = function() {
-            checkApiStatus();
-        };
-
-        async function checkApiStatus() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/health`);
-                if (response.ok) {
-                    isOnline = true;
-                    updateStatus('API Online', 'online');
-                } else {
-                    isOnline = false;
-                    updateStatus('API Offline', 'offline');
-                }
-            } catch (error) {
-                isOnline = false;
-                updateStatus('API Offline', 'offline');
-            }
-        }
-
-        function updateStatus(text, className) {
-            const statusElement = document.getElementById('status');
-            const statusTextElement = document.getElementById('statusText');
-            
-            statusElement.className = `status ${className}`;
-            
-            const icon = className === 'online' ? 
-                '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/></svg>' :
-                '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;"><path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" stroke-width="2"/></svg>';
-            
-            statusTextElement.innerHTML = icon + text;
-        }
-
-
-
+        // Função para validar número de telefone
         async function validatePhone() {
             const phoneNumber = document.getElementById('phoneNumber').value.trim();
             
@@ -374,14 +503,6 @@
                 showError('Por favor, digite um número de telefone.');
                 return;
             }
-
-            if (!isOnline) {
-                showError('API está offline. Verifique se o servidor está rodando.');
-                return;
-            }
-
-            showLoading(true);
-            hideResult();
 
             try {
                 const response = await fetch(`${API_BASE_URL}/validate`, {
@@ -394,84 +515,13 @@
 
                 const data = await response.json();
 
-                if (response.ok) {
-                    if (data.is_valid) {
-                        showSuccess(data);
-                    } else {
-                        showError(data.error_message || 'Número inválido');
-                    }
+                if (response.ok && data.is_valid) {
+                    showSuccess(data);
                 } else {
-                    // Tratar diferentes tipos de erro
-                    let errorMessage = 'Erro desconhecido';
-                    
-                    if (data.detail) {
-                        if (typeof data.detail === 'string') {
-                            errorMessage = data.detail;
-                        } else if (Array.isArray(data.detail)) {
-                            // Handle Pydantic validation errors
-                            const validationErrors = data.detail.map(err => err.msg || err.message || 'Erro de validação').join(', ');
-                            errorMessage = validationErrors;
-                        } else if (typeof data.detail === 'object') {
-                            errorMessage = data.detail.message || data.detail.msg || JSON.stringify(data.detail);
-                        } else {
-                            errorMessage = String(data.detail);
-                        }
-                    } else if (data.error_message) {
-                        errorMessage = data.error_message;
-                    } else if (data.error) {
-                        errorMessage = data.error;
-                    }
-                    
-                    showError('Erro na validação: ' + errorMessage);
+                    showError(data.error_message || 'Erro na validação');
                 }
             } catch (error) {
-                let errorMessage = 'Erro de conexão';
-                
-                if (error.message) {
-                    errorMessage += ': ' + error.message;
-                } else if (typeof error === 'string') {
-                    errorMessage += ': ' + error;
-                } else if (typeof error === 'object') {
-                    errorMessage += ': ' + (error.message || error.msg || JSON.stringify(error));
-                } else {
-                    errorMessage += ': ' + String(error);
-                }
-                
-                showError(errorMessage);
-            } finally {
-                showLoading(false);
-            }
-        }
-
-        function showLoading(show) {
-            const loading = document.getElementById('loading');
-            const btn = document.getElementById('validateBtn');
-            
-            if (show) {
-                loading.style.display = 'block';
-                btn.disabled = true;
-                btn.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px; animation: spin 1s linear infinite;">
-                        <path d="M12 2V6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M12 18V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M4.93 4.93L7.76 7.76" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M16.24 16.24L19.07 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M2 12H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M18 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M4.93 19.07L7.76 16.24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M16.24 7.76L19.07 4.93" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Validando...
-                `;
-            } else {
-                loading.style.display = 'none';
-                btn.disabled = false;
-                btn.innerHTML = `
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 8px;">
-                        <path d="M21 21L16.514 16.506L21 21ZM19 10.5C19 15.194 15.194 19 10.5 19C5.806 19 2 15.194 2 10.5C2 5.806 5.806 2 10.5 2C15.194 2 19 5.806 19 10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Validar Número
-                `;
+                showError('Erro ao conectar com a API: ' + error.message);
             }
         }
 
@@ -538,7 +588,6 @@
         function showError(message) {
             const resultDiv = document.getElementById('result');
             
-            // Garantir que a mensagem seja uma string
             let displayMessage = message;
             if (typeof message === 'object') {
                 displayMessage = JSON.stringify(message, null, 2);
@@ -561,19 +610,226 @@
             resultDiv.style.display = 'block';
         }
 
-        function hideResult() {
-            document.getElementById('result').style.display = 'none';
+        // Funções do Chatbot
+        function addMessage(content, isUser = false) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${isUser ? '👤' : '🤖'}</div>
+                <div class="message-content">${content}</div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Permitir pressionar Enter para validar
+        function showTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            typingIndicator.style.display = 'flex';
+            typingIndicator.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function hideTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            typingIndicator.style.display = 'none';
+        }
+
+        async function sendMessage() {
+            const chatInput = document.getElementById('chatInput');
+            const message = chatInput.value.trim();
+            
+            if (!message) return;
+            
+            // Adiciona mensagem do usuário
+            addMessage(message, true);
+            chatInput.value = '';
+            
+            // Mostra indicador de digitação
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                
+                hideTypingIndicator();
+                
+                if (data.success) {
+                    addMessage(data.response);
+                } else {
+                    addMessage('Desculpe, ocorreu um erro ao processar sua mensagem.');
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('Erro ao conectar com o servidor. Tente novamente.');
+            }
+        }
+
+        // Funções de gravação de áudio
+        async function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    await transcribeAudio(audioBlob);
+                };
+                
+                mediaRecorder.start();
+                isRecording = true;
+                
+                const recordBtn = document.getElementById('recordBtn');
+                recordBtn.classList.add('recording');
+                recordBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                `;
+                
+                // Adiciona mensagem de gravação
+                addMessage('🎤 Gravando... (clique novamente para parar)', true);
+                
+            } catch (error) {
+                console.error('Erro ao acessar microfone:', error);
+                addMessage('Erro ao acessar microfone. Verifique as permissões.');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                
+                const recordBtn = document.getElementById('recordBtn');
+                recordBtn.classList.remove('recording');
+                recordBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2A3 3 0 0 0 9 5V11A3 3 0 0 0 15 11V5A3 3 0 0 0 12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M19 10V11A7 7 0 0 1 5 11V10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 18.5V22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M8 22H16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                `;
+            }
+        }
+
+        async function transcribeAudio(audioBlob) {
+            try {
+                // Converte o áudio para base64
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+                
+                // Remove a mensagem de gravação
+                const chatMessages = document.getElementById('chatMessages');
+                if (chatMessages.lastElementChild && chatMessages.lastElementChild.querySelector('.message-content').textContent === '🎤 Gravando... (clique novamente para parar)') {
+                    chatMessages.removeChild(chatMessages.lastElementChild);
+                }
+                
+                // Adiciona mensagem de processamento
+                addMessage('🎤 Processando áudio...', true);
+                showTypingIndicator();
+                
+                const response = await fetch(`${API_BASE_URL}/transcribe-audio`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ audio_data: base64Audio })
+                });
+
+                const data = await response.json();
+                hideTypingIndicator();
+                
+                if (data.success && data.text) {
+                    // Substitui a mensagem de processamento pela transcrição
+                    const lastMessage = chatMessages.lastElementChild;
+                    if (lastMessage && lastMessage.querySelector('.message-content').textContent === '🎤 Processando áudio...') {
+                        lastMessage.querySelector('.message-content').textContent = data.text;
+                    }
+                    
+                    // Envia a transcrição para o chat
+                    await sendTranscribedMessage(data.text);
+                } else {
+                    addMessage('Não foi possível transcrever o áudio. Tente novamente.');
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                console.error('Erro na transcrição:', error);
+                addMessage('Erro ao processar o áudio. Tente novamente.');
+            }
+        }
+
+        async function sendTranscribedMessage(text) {
+            showTypingIndicator();
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: text })
+                });
+
+                const data = await response.json();
+                hideTypingIndicator();
+                
+                if (data.success) {
+                    addMessage(data.response);
+                } else {
+                    addMessage('Desculpe, ocorreu um erro ao processar sua mensagem.');
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                addMessage('Erro ao conectar com o servidor. Tente novamente.');
+            }
+        }
+
+        // Event listeners
         document.getElementById('phoneNumber').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 validatePhone();
             }
         });
 
+        document.getElementById('chatInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
         // Verificar status da API periodicamente
-        setInterval(checkApiStatus, 30000); // A cada 30 segundos
+        setInterval(async () => {
+            try {
+                await fetch(`${API_BASE_URL}/health`);
+            } catch (error) {
+                console.log('API não está respondendo');
+            }
+        }, 30000);
     </script>
 </body>
 </html> 

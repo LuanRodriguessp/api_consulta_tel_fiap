@@ -1,7 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, validator
-from typing import Optional
+from typing import Optional, List
+import httpx
+import base64
+import json
+import os
 from phone_validator import PhoneValidator
 
 app = FastAPI(
@@ -21,6 +25,10 @@ app.add_middleware(
 
 # Instância global do validador
 phone_validator = PhoneValidator()
+
+# Configuração da API Gemini
+GEMINI_API_KEY = "AIzaSyBu2oagQERfHTyrWLfvWJ1r-434jGS_4ts"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent"
 
 class PhoneNumberRequest(BaseModel):
     phone_number: str
@@ -44,6 +52,24 @@ class PhoneNumberResponse(BaseModel):
     number: Optional[str] = None
     operator: Optional[str] = None
     operator_info: Optional[dict] = None
+    error_message: Optional[str] = None
+
+class ChatMessage(BaseModel):
+    message: str
+    is_audio: bool = False
+    audio_data: Optional[str] = None
+
+class ChatResponse(BaseModel):
+    response: str
+    success: bool
+    error_message: Optional[str] = None
+
+class AudioTranscriptionRequest(BaseModel):
+    audio_data: str  # Base64 encoded audio data
+
+class AudioTranscriptionResponse(BaseModel):
+    text: str
+    success: bool
     error_message: Optional[str] = None
 
 @app.get("/")
@@ -145,6 +171,136 @@ async def get_examples():
         ],
         "expected_format": "55 11 98877 6655"
     }
+
+async def call_gemini_api(prompt: str) -> str:
+    """Chama a API do Gemini para gerar resposta"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+                json={
+                    "contents": [
+                        {
+                            "parts": [
+                                {
+                                    "text": f"""Você é um assistente especializado em validação de números de celular brasileiros. 
+                                    Responda de forma clara e concisa em português brasileiro.
+                                    
+                                    Pergunta do usuário: {prompt}
+                                    
+                                    Se a pergunta for sobre validação de números de celular, explique sobre:
+                                    - Formato esperado: 55 11 98877 6655
+                                    - DDDs válidos no Brasil
+                                    - Operadoras (Vivo, Claro, TIM, etc.)
+                                    - Como usar a API de validação
+                                    
+                                    Se for uma pergunta geral, responda de forma útil e amigável."""
+                                }
+                            ]
+                        }
+                    ]
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "candidates" in data and len(data["candidates"]) > 0:
+                    return data["candidates"][0]["content"]["parts"][0]["text"]
+                else:
+                    return "Desculpe, não consegui processar sua pergunta. Tente novamente."
+            else:
+                return f"Erro na API do Gemini: {response.status_code}"
+                
+    except Exception as e:
+        return f"Erro ao conectar com a API do Gemini: {str(e)}"
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat_with_bot(request: ChatMessage):
+    """Endpoint para chat com o bot usando Gemini"""
+    try:
+        message = request.message.strip()
+        
+        if not message:
+            return ChatResponse(
+                response="Por favor, digite uma mensagem.",
+                success=False,
+                error_message="Mensagem vazia"
+            )
+        
+        # Chama a API do Gemini
+        response = await call_gemini_api(message)
+        
+        return ChatResponse(
+            response=response,
+            success=True
+        )
+        
+    except Exception as e:
+        return ChatResponse(
+            response="Desculpe, ocorreu um erro ao processar sua mensagem.",
+            success=False,
+            error_message=str(e)
+        )
+
+@app.post("/transcribe-audio", response_model=AudioTranscriptionResponse)
+async def transcribe_audio(request: AudioTranscriptionRequest):
+    """Endpoint para transcrever áudio usando Gemini"""
+    try:
+        # Decodifica o áudio base64
+        audio_data = base64.b64decode(request.audio_data)
+        
+        # Chama a API do Gemini para transcrição
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}",
+                json={
+                    "contents": [
+                        {
+                            "parts": [
+                                {
+                                    "text": "Transcreva o seguinte áudio para texto em português brasileiro:"
+                                },
+                                {
+                                    "inline_data": {
+                                        "mime_type": "audio/wav",
+                                        "data": request.audio_data
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if "candidates" in data and len(data["candidates"]) > 0:
+                    transcribed_text = data["candidates"][0]["content"]["parts"][0]["text"]
+                    return AudioTranscriptionResponse(
+                        text=transcribed_text,
+                        success=True
+                    )
+                else:
+                    return AudioTranscriptionResponse(
+                        text="",
+                        success=False,
+                        error_message="Não foi possível transcrever o áudio"
+                    )
+            else:
+                return AudioTranscriptionResponse(
+                    text="",
+                    success=False,
+                    error_message=f"Erro na API: {response.status_code}"
+                )
+                
+    except Exception as e:
+        return AudioTranscriptionResponse(
+            text="",
+            success=False,
+            error_message=str(e)
+        )
 
 if __name__ == "__main__":
     import uvicorn
