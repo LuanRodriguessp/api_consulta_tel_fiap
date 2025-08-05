@@ -401,10 +401,43 @@
                         showError(data.error_message || 'Número inválido');
                     }
                 } else {
-                    showError('Erro na validação: ' + (data.detail || 'Erro desconhecido'));
+                    // Tratar diferentes tipos de erro
+                    let errorMessage = 'Erro desconhecido';
+                    
+                    if (data.detail) {
+                        if (typeof data.detail === 'string') {
+                            errorMessage = data.detail;
+                        } else if (Array.isArray(data.detail)) {
+                            // Handle Pydantic validation errors
+                            const validationErrors = data.detail.map(err => err.msg || err.message || 'Erro de validação').join(', ');
+                            errorMessage = validationErrors;
+                        } else if (typeof data.detail === 'object') {
+                            errorMessage = data.detail.message || data.detail.msg || JSON.stringify(data.detail);
+                        } else {
+                            errorMessage = String(data.detail);
+                        }
+                    } else if (data.error_message) {
+                        errorMessage = data.error_message;
+                    } else if (data.error) {
+                        errorMessage = data.error;
+                    }
+                    
+                    showError('Erro na validação: ' + errorMessage);
                 }
             } catch (error) {
-                showError('Erro de conexão: ' + error.message);
+                let errorMessage = 'Erro de conexão';
+                
+                if (error.message) {
+                    errorMessage += ': ' + error.message;
+                } else if (typeof error === 'string') {
+                    errorMessage += ': ' + error;
+                } else if (typeof error === 'object') {
+                    errorMessage += ': ' + (error.message || error.msg || JSON.stringify(error));
+                } else {
+                    errorMessage += ': ' + String(error);
+                }
+                
+                showError(errorMessage);
             } finally {
                 showLoading(false);
             }
@@ -504,6 +537,15 @@
 
         function showError(message) {
             const resultDiv = document.getElementById('result');
+            
+            // Garantir que a mensagem seja uma string
+            let displayMessage = message;
+            if (typeof message === 'object') {
+                displayMessage = JSON.stringify(message, null, 2);
+            } else if (typeof message !== 'string') {
+                displayMessage = String(message);
+            }
+            
             resultDiv.innerHTML = `
                 <h3>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: inline-block; vertical-align: middle; margin-right: 10px;">
@@ -513,7 +555,7 @@
                     </svg>
                     Erro na Validação
                 </h3>
-                <p>${message}</p>
+                <p>${displayMessage}</p>
             `;
             resultDiv.className = 'result error';
             resultDiv.style.display = 'block';
